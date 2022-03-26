@@ -78,32 +78,7 @@ private:
     const char **glfwExtentions =
         glfwGetRequiredInstanceExtensions(&extentionCount);
 
-    // check & enable validation layer
 #ifndef NDEBUG
-    uint32_t layerCount = 0;
-    vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
-    VkLayerProperties *availableProperties = new VkLayerProperties[layerCount];
-    char **layerNames = new char *[layerCount];
-    vkEnumerateInstanceLayerProperties(&layerCount, availableProperties);
-    std::cout << "Vulkan available layer properties: " << std::endl;
-
-    bool flag = false;
-    for (uint32_t i = 0; i < layerCount; ++i) {
-      std::cout << "\t" << (availableProperties[i]).layerName << std::endl;
-      layerNames[i] = new char[256];
-      std::memcpy(layerNames[i], (availableProperties[i]).layerName, 256);
-      if (std::strcmp("VK_LAYER_KHRONOS_validation",
-                      (availableProperties[i]).layerName))
-        flag = true;
-    }
-    delete[] availableProperties;
-    if (!flag) {
-      delete[] layerNames;
-      throw std::runtime_error("Validation layer not found.");
-    }
-    createInfo.enabledLayerCount = layerCount;
-    createInfo.ppEnabledLayerNames = layerNames;
-
     const char **extentions = new const char *[extentionCount + 1];
     for (int i = 0; i < extentionCount; ++i) {
       char *tmp;
@@ -116,7 +91,6 @@ private:
     extentions[extentionCount] = VK_EXT_DEBUG_REPORT_EXTENSION_NAME;
     createInfo.enabledExtensionCount = extentionCount + 1;
     createInfo.ppEnabledExtensionNames = extentions;
-
 #else
     createInfo.enabledLayerCount = 0;
     createInfo.enabledExtensionCount = extentionCount;
@@ -157,6 +131,7 @@ private:
       return VK_ERROR_EXTENSION_NOT_PRESENT;
     }
   }
+
   static void
   DestroyDebugReportCallbackEXT(VkInstance instance,
                                 VkDebugReportCallbackEXT callback,
@@ -196,6 +171,7 @@ private:
         break;
       }
     }
+    delete[] devices;
 
     if (physicalDevice == VK_NULL_HANDLE) {
       throw std::runtime_error("Failed to find a suitable GPU.");
