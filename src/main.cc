@@ -12,22 +12,8 @@
 #include <functional>
 #include <iostream>
 #include <stdexcept>
-#include <string>
-#include <vector>
 
-#ifndef NDEBUG
-static VKAPI_ATTR VkBool32 VKAPI_CALL
-debugCallback(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objType,
-              uint64_t obj, size_t location, int32_t code,
-              const char *layerPrefix, const char *msg, void *userData) {
-
-  std::cerr << "validation layer: " << msg << std::endl;
-
-  return VK_FALSE;
-}
-
-#endif
-class MyApplication {
+class Application {
 public:
   void run() {
     initVulkan();
@@ -110,12 +96,22 @@ private:
     createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT;
     createInfo.flags =
         VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT;
-    createInfo.pfnCallback = debugCallback;
+    createInfo.pfnCallback = Application::debugCallback;
 
     if (CreateDebugReportCallbackEXT(instance, &createInfo, nullptr,
                                      &callback) != VK_SUCCESS) {
       throw std::runtime_error("failed to set up debug callback!");
     }
+  }
+
+  static VKAPI_ATTR VkBool32 VKAPI_CALL
+  debugCallback(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objType,
+                uint64_t obj, size_t location, int32_t code,
+                const char *layerPrefix, const char *msg, void *userData) {
+
+    std::cerr << "validation layer: " << msg << std::endl;
+
+    return VK_FALSE;
   }
 
   VkResult CreateDebugReportCallbackEXT(
@@ -178,7 +174,7 @@ private:
     }
   }
 
-  bool isDeviceSuitable(VkPhysicalDevice device) {
+  bool isDeviceSuitable(const VkPhysicalDevice &device) {
     // check device suitability
 #ifndef NDEBUG
     VkPhysicalDeviceProperties deviceProperties;
@@ -191,7 +187,28 @@ private:
               << deviceProperties.deviceName << "\t" << std::endl;
 #endif
 
-    return true;
+    return findQueueFamily(device);
+  }
+
+  bool findQueueFamily(const VkPhysicalDevice &device) {
+    uint32_t queueFamilyCount = 0;
+    vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount,
+                                             nullptr);
+    VkQueueFamilyProperties *queueFamilies =
+        new VkQueueFamilyProperties[queueFamilyCount];
+    vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount,
+                                             queueFamilies);
+    bool flag = false;
+    for (auto queueFamily = queueFamilies;
+         queueFamily != queueFamilies + queueFamilyCount; queueFamily++) {
+      if (queueFamily->queueCount > 0 &&
+          queueFamily->queueFlags & VK_QUEUE_GRAPHICS_BIT) {
+        flag = true;
+        break;
+      }
+    }
+    delete[] queueFamilies;
+    return flag;
   }
 
   void mainLoop() {
@@ -211,7 +228,7 @@ private:
 };
 
 int main() {
-  MyApplication application;
+  Application application;
   try {
     application.run();
   } catch (std::runtime_error e) {
