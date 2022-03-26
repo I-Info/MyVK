@@ -53,6 +53,7 @@ private:
 #ifndef NDEBUG
     setUpDebugCallback();
 #endif
+    selectPhysicalDevices();
   }
 
   void createInstance() {
@@ -98,7 +99,7 @@ private:
     delete[] availableProperties;
     if (!flag) {
       delete[] layerNames;
-      throw std::runtime_error("[error] Validation layer not found.");
+      throw std::runtime_error("Validation layer not found.");
     }
     createInfo.enabledLayerCount = layerCount;
     createInfo.ppEnabledLayerNames = layerNames;
@@ -177,6 +178,46 @@ private:
     window = glfwCreateWindow(WIDTH, HEIGHT, "Hello", nullptr, nullptr);
   }
 
+  void selectPhysicalDevices() {
+    VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
+    uint32_t deviceCount = 0;
+    vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
+    if (deviceCount == 0) {
+      throw std::runtime_error("No available physical devices found.");
+    }
+    VkPhysicalDevice *devices = new VkPhysicalDevice[deviceCount];
+    vkEnumeratePhysicalDevices(instance, &deviceCount, devices);
+
+    // find first suitable physical device
+    for (VkPhysicalDevice *device = devices; device != devices + deviceCount;
+         ++device) {
+      if (isDeviceSuitable(*device)) {
+        physicalDevice = *device;
+        break;
+      }
+    }
+
+    if (physicalDevice == VK_NULL_HANDLE) {
+      throw std::runtime_error("Failed to find a suitable GPU.");
+    }
+  }
+
+  bool isDeviceSuitable(VkPhysicalDevice device) {
+    // check device suitability
+#ifndef NDEBUG
+    VkPhysicalDeviceProperties deviceProperties;
+    vkGetPhysicalDeviceProperties(device, &deviceProperties);
+    VkPhysicalDeviceFeatures deviceFeatures;
+    vkGetPhysicalDeviceFeatures(device, &deviceFeatures);
+
+    std::cout << "Find physical device: " << deviceProperties.deviceID << "\t"
+              << deviceProperties.vendorID << "\t"
+              << deviceProperties.deviceName << "\t" << std::endl;
+#endif
+
+    return true;
+  }
+
   void mainLoop() {
     while (!glfwWindowShouldClose(window)) {
       glfwPollEvents();
@@ -198,7 +239,7 @@ int main() {
   try {
     application.run();
   } catch (std::runtime_error e) {
-    std::cerr << e.what() << std::endl;
+    std::cerr << "[error]\t" << e.what() << std::endl;
     return EXIT_FAILURE;
   }
 }
