@@ -1,4 +1,5 @@
 #include "application.h"
+#include "logging.h"
 
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
@@ -162,9 +163,8 @@ bool Application::isDeviceSuitable(const VkPhysicalDevice &device) {
   VkPhysicalDeviceFeatures deviceFeatures;
   vkGetPhysicalDeviceFeatures(device, &deviceFeatures);
 
-  std::cout << "Find physical device: " << deviceProperties.deviceID << "\t"
-            << deviceProperties.vendorID << "\t" << deviceProperties.deviceName
-            << "\t" << std::endl;
+  LOG(INFO) << "Find physical device: " << deviceProperties.deviceID << " "
+            << deviceProperties.vendorID << " " << deviceProperties.deviceName;
 #endif
   return findQueueFamily(device);
 }
