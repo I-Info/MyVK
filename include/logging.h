@@ -3,14 +3,14 @@
 
 #include <glog/logging.h>
 
-void logPrefix(std::ostream &s, const LogMessageInfo &l, void *);
+void logPrefix(std::ostream &s, const google::LogMessageInfo &l, void *);
 
-static void logInfo(std::ostream &s, const LogMessageInfo &l);
+static void logInfo(std::ostream &s, const google::LogMessageInfo &l);
 
-static void logError(std::ostream &s, const LogMessageInfo &l);
+static void logError(std::ostream &s, const google::LogMessageInfo &l);
 
-static void logFatal(std::ostream &s, const LogMessageInfo &l);
+static void logFatal(std::ostream &s, const google::LogMessageInfo &l);
 
-static void logWarning(std::ostream &s, const LogMessageInfo &l);
+static void logWarning(std::ostream &s, const google::LogMessageInfo &l);
 
 #endif

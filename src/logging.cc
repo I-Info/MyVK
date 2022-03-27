@@ -1,9 +1,10 @@
 #include "logging.h"
+
 #include <cstring>
 #include <iomanip>
 #include <iostream>
 
-void logPrefix(std::ostream &s, const LogMessageInfo &l, void *) {
+void logPrefix(std::ostream &s, const google::LogMessageInfo &l, void *) {
   const char *severity = l.severity;
   if (severity[0] == 'I') {
     logInfo(s, l);
@@ -16,7 +17,7 @@ void logPrefix(std::ostream &s, const LogMessageInfo &l, void *) {
   }
 }
 
-void logInfo(std::ostream &s, const LogMessageInfo &l) {
+void logInfo(std::ostream &s, const google::LogMessageInfo &l) {
   s << '[' << std::setw(2) << l.time.hour() << ':' << std::setw(2)
     << l.time.min() << ':' << std::setw(2) << l.time.sec() << "."
     << std::setw(6) << l.time.usec() << ' ' << std::setfill(' ') << std::setw(5)
@@ -24,7 +25,7 @@ void logInfo(std::ostream &s, const LogMessageInfo &l) {
     << "\033[0m]";
 }
 
-void logError(std::ostream &s, const LogMessageInfo &l) {
+void logError(std::ostream &s, const google::LogMessageInfo &l) {
   s << '[' << std::setw(2) << l.time.hour() << ':' << std::setw(2)
     << l.time.min() << ':' << std::setw(2) << l.time.sec() << "."
     << std::setw(6) << l.time.usec() << ' ' << std::setfill(' ') << std::setw(5)
@@ -32,7 +33,7 @@ void logError(std::ostream &s, const LogMessageInfo &l) {
     << l.line_number << " \033[1;31m" << l.severity << "\033[0m]";
 }
 
-void logFatal(std::ostream &s, const LogMessageInfo &l) {
+void logFatal(std::ostream &s, const google::LogMessageInfo &l) {
   s << '[' << std::setw(2) << l.time.hour() << ':' << std::setw(2)
     << l.time.min() << ':' << std::setw(2) << l.time.sec() << "."
     << std::setw(6) << l.time.usec() << ' ' << std::setfill(' ') << std::setw(5)
@@ -40,7 +41,7 @@ void logFatal(std::ostream &s, const LogMessageInfo &l) {
     << l.line_number << " \033[1;30;41m" << l.severity << "\033[0m]";
 }
 
-void logWarning(std::ostream &s, const LogMessageInfo &l) {
+void logWarning(std::ostream &s, const google::LogMessageInfo &l) {
   s << '[' << std::setw(2) << l.time.hour() << ':' << std::setw(2)
     << l.time.min() << ':' << std::setw(2) << l.time.sec() << "."
     << std::setw(6) << l.time.usec() << ' ' << std::setfill(' ') << std::setw(5)
