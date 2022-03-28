@@ -4,6 +4,7 @@
 int main(int argc, char *argv[]) {
   // Initialize Google’s logging library.
   google::InitGoogleLogging(argv[0], &logPrefix);
+  FLAGS_logtostdout = true;
   FLAGS_logtostderr = true;
 
   LOG(INFO) << "Application starting..";
@@ -15,4 +16,5 @@ int main(int argc, char *argv[]) {
     LOG(ERROR) << e.what();
     return EXIT_FAILURE;
   }
+
 }

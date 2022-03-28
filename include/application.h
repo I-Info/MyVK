@@ -23,6 +23,10 @@ private:
 
   VkInstance instance;
 
+  VkDevice device;
+
+  VkQueue graphicsQueue;
+
   void initVulkan();
 
   void createInstance();
@@ -36,7 +40,7 @@ private:
                 uint64_t obj, size_t location, int32_t code,
                 const char *layerPrefix, const char *msg, void *userData);
 
-  VkResult CreateDebugReportCallbackEXT(
+  static VkResult CreateDebugReportCallbackEXT(
       VkInstance instance,
       const VkDebugReportCallbackCreateInfoEXT *pCreateInfo,
       const VkAllocationCallbacks *pAllocator,
@@ -50,11 +54,15 @@ private:
 
   void initWindow();
 
-  void selectPhysicalDevices();
+  void selectPhysicalDevices(VkPhysicalDevice &physicalDevice,
+                             uint32_t &queueFamilyIndex);
 
-  bool isDeviceSuitable(const VkPhysicalDevice &device);
+  static bool isDeviceSuitable(const VkPhysicalDevice &dev, uint32_t &index);
 
-  bool findQueueFamily(const VkPhysicalDevice &device);
+  static bool findQueueFamily(const VkPhysicalDevice &dev, uint32_t &index);
+
+  void createLogicalDevice(const VkPhysicalDevice &physicalDevice,
+                           const uint32_t &queueFamilyIndex);
 
   void mainLoop();
 
