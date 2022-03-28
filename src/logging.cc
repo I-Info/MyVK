@@ -1,8 +1,6 @@
 #include "logging.h"
 
-#include <cstring>
 #include <iomanip>
-#include <iostream>
 
 void logPrefix(std::ostream &s, const google::LogMessageInfo &l, void *) {
   const char *severity = l.severity;

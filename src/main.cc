@@ -4,15 +4,15 @@
 int main(int argc, char *argv[]) {
   // Initialize Google’s logging library.
   google::InitGoogleLogging(argv[0], &logPrefix);
-  FLAGS_logtostderr = 1;
+  FLAGS_logtostderr = true;
 
   LOG(INFO) << "Application starting..";
 
   Application application;
   try {
     application.run();
-  } catch (std::runtime_error e) {
-    LOG(FATAL) << e.what();
+  } catch (const std::runtime_error& e) {
+    LOG(ERROR) << e.what();
     return EXIT_FAILURE;
   }
 }
