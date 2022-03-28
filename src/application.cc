@@ -9,11 +9,13 @@
 #include <cstring>
 #include <functional>
 #include <iostream>
-#include <stdexcept>
+
+const uint32_t Application::QueueFamilyIndices::GRAPHICS = 0B01;
+const uint32_t Application::QueueFamilyIndices::PRESENT = 0B10;
 
 void Application::run() {
-  initVulkan();
   initWindow();
+  initVulkan();
   mainLoop();
   cleanUp();
 }
@@ -23,10 +25,11 @@ void Application::initVulkan() {
 #ifndef NDEBUG
   setUpDebugCallback();
 #endif
+  createSurface();
   VkPhysicalDevice physicalDevice;
-  uint32_t index;
-  selectPhysicalDevices(physicalDevice, index);
-  createLogicalDevice(physicalDevice, index);
+  QueueFamilyIndices indices;
+  selectPhysicalDevices(physicalDevice, indices);
+  createLogicalDevice(physicalDevice, indices);
 }
 
 void Application::createInstance() {
@@ -43,25 +46,21 @@ void Application::createInstance() {
   createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
   createInfo.pApplicationInfo = &appInfo;
 
-  if (glfwVulkanSupported() == GLFW_TRUE) {
-    throw std::runtime_error("No Vulkan support!");
+  if (glfwVulkanSupported() != GLFW_TRUE) {
+    LOG(ERROR) << "No Vulkan support!";
   }
 
   uint32_t extensionCount = 0;
 
   const char **glfwExtensions =
       glfwGetRequiredInstanceExtensions(&extensionCount);
+  if (glfwExtensions == nullptr) {
+    LOG(ERROR) << "Fail to get vulkan extensions.";
+  }
 
 #ifndef NDEBUG
   const char **extensions = new const char *[extensionCount + 1];
-  for (int i = 0; i < extensionCount; ++i) {
-    size_t len = std::strlen(glfwExtensions[i]);
-    char *tmp = new char[len];
-    std::memcpy(tmp, glfwExtensions[i], sizeof(char) * len);
-    extensions[i] = tmp;
-  }
-
-  delete[] glfwExtensions;
+  std::memcpy(extensions, glfwExtensions, sizeof(char *) * extensionCount);
 
   extensions[extensionCount] = VK_EXT_DEBUG_REPORT_EXTENSION_NAME;
   createInfo.enabledExtensionCount = extensionCount + 1;
@@ -75,7 +74,7 @@ void Application::createInstance() {
 
   VkResult result = vkCreateInstance(&createInfo, nullptr, &instance);
   if (result != VK_SUCCESS) {
-    throw std::runtime_error("Fail to create Vulkan instance");
+    LOG(ERROR) << "Fail to create Vulkan instance";
   }
 }
 
@@ -89,7 +88,7 @@ void Application::setUpDebugCallback() {
 
   if (CreateDebugReportCallbackEXT(instance, &createInfo, nullptr, &callback) !=
       VK_SUCCESS) {
-    throw std::runtime_error("failed to set up debug callback!");
+    LOG(ERROR) << "failed to set up debug callback!";
   }
 }
 
@@ -127,7 +126,7 @@ void Application::DestroyDebugReportCallbackEXT(
 
 void Application::initWindow() {
   glfwInit();
-  // disable OpenGL API
+  // disable API
   glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
   glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
@@ -135,19 +134,19 @@ void Application::initWindow() {
 }
 
 void Application::selectPhysicalDevices(VkPhysicalDevice &physicalDevice,
-                                        uint32_t &queueFamilyIndex) {
+                                        QueueFamilyIndices &indices) {
   physicalDevice = VK_NULL_HANDLE;
   uint32_t deviceCount = 0;
   vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
   if (deviceCount == 0) {
-    throw std::runtime_error("No available physical devices found.");
+    LOG(ERROR) << "No available physical devices found.";
   }
   auto *devices = new VkPhysicalDevice[deviceCount];
   vkEnumeratePhysicalDevices(instance, &deviceCount, devices);
 
   // find first suitable physical device
   for (VkPhysicalDevice *d = devices; d != devices + deviceCount; ++d) {
-    if (isDeviceSuitable(*d, queueFamilyIndex)) {
+    if (isDeviceSuitable(*d, indices)) {
       physicalDevice = *d;
       break;
     }
@@ -155,12 +154,12 @@ void Application::selectPhysicalDevices(VkPhysicalDevice &physicalDevice,
   delete[] devices;
 
   if (physicalDevice == VK_NULL_HANDLE) {
-    throw std::runtime_error("Failed to find a suitable GPU.");
+    LOG(ERROR) << "Failed to find a suitable GPU.";
   }
 }
 
 bool Application::isDeviceSuitable(const VkPhysicalDevice &dev,
-                                   uint32_t &index) {
+                                   QueueFamilyIndices &indices) {
   // check dev suitability
 #ifndef NDEBUG
   VkPhysicalDeviceProperties deviceProperties;
@@ -171,26 +170,41 @@ bool Application::isDeviceSuitable(const VkPhysicalDevice &dev,
   LOG(INFO) << "Find physical dev: " << deviceProperties.deviceID << " "
             << deviceProperties.vendorID << " " << deviceProperties.deviceName;
 #endif
-  return findQueueFamily(dev, index);
+  findQueueFamilies(dev, indices);
+  return indices.isComplete();
 }
 
-bool Application::findQueueFamily(const VkPhysicalDevice &dev,
-                                  uint32_t &index) {
+void Application::findQueueFamilies(const VkPhysicalDevice &dev,
+                                    QueueFamilyIndices &indices) {
+  // get properties
   uint32_t queueFamilyCount = 0;
   vkGetPhysicalDeviceQueueFamilyProperties(dev, &queueFamilyCount, nullptr);
   auto *queueFamilies = new VkQueueFamilyProperties[queueFamilyCount];
   vkGetPhysicalDeviceQueueFamilyProperties(dev, &queueFamilyCount,
                                            queueFamilies);
-  uint32_t i;
-  for (i = 0; i < queueFamilyCount; i++) {
-    if (queueFamilies[i].queueCount > 0 &&
+  for (uint32_t i = 0; i < queueFamilyCount; i++) {
+    if (indices.checkFlag(QueueFamilyIndices::GRAPHICS) &&
+        queueFamilies[i].queueCount > 0 &&
         queueFamilies[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) {
+      indices.setIndex(QueueFamilyIndices::GRAPHICS, i);
+    }
+
+    if (indices.checkFlag(QueueFamilyIndices::PRESENT)) {
+      VkBool32 presentSupport = false;
+      if (queueFamilies[i].queueCount > 0 &&
+          vkGetPhysicalDeviceSurfaceSupportKHR(dev, i, surface,
+                                               &presentSupport) == VK_SUCCESS &&
+          presentSupport) {
+        indices.setIndex(QueueFamilyIndices::PRESENT, i);
+      }
+    }
+
+    if (indices.isComplete()) {
       break;
     }
   }
+
   delete[] queueFamilies;
-  index = i;
-  return i != queueFamilyCount;
 }
 
 void Application::mainLoop() {
@@ -204,32 +218,71 @@ void Application::cleanUp() {
   DestroyDebugReportCallbackEXT(instance, callback, nullptr);
 #endif
   vkDestroyDevice(device, nullptr);
+  vkDestroySurfaceKHR(instance, surface, nullptr);
   vkDestroyInstance(instance, nullptr);
   glfwDestroyWindow(window);
   glfwTerminate();
 }
 
-void Application::createLogicalDevice(const VkPhysicalDevice &physicalDevice,
-                                      const uint32_t &queueFamilyIndex) {
-  VkDeviceQueueCreateInfo queueCreateInfo = {};
-  queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-  queueCreateInfo.queueFamilyIndex = queueFamilyIndex;
-  queueCreateInfo.queueCount = 1;
-  queueCreateInfo.pQueuePriorities = new float{1.0f};
+void Application::createLogicalDevice(
+    const VkPhysicalDevice &physicalDevice,
+    const QueueFamilyIndices &queueFamilyIndices) {
 
-  VkPhysicalDeviceFeatures deviceFeatures = {};
+  auto *queueCreateInfos =
+      new VkDeviceQueueCreateInfo[QueueFamilyIndices::FLAGS];
+
+  for (int i = 0; i < QueueFamilyIndices::FLAGS; ++i) {
+    queueCreateInfos[i].sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+    queueCreateInfos[i].queueFamilyIndex = queueFamilyIndices.getIndex(i, true);
+    queueCreateInfos[i].queueCount = 1;
+    queueCreateInfos[i].pQueuePriorities = new float{1.0f};
+  }
+
+  auto *deviceFeatures = new VkPhysicalDeviceFeatures{};
 
   VkDeviceCreateInfo createInfo = {};
   createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-  createInfo.pQueueCreateInfos = &queueCreateInfo;
-  createInfo.queueCreateInfoCount = 1;
-  createInfo.pEnabledFeatures = &deviceFeatures;
+  createInfo.pQueueCreateInfos = queueCreateInfos;
+  createInfo.queueCreateInfoCount = QueueFamilyIndices::FLAGS;
+  createInfo.pEnabledFeatures = deviceFeatures;
   createInfo.enabledExtensionCount = 0;
   createInfo.enabledLayerCount = 0;
 
-  if (vkCreateDevice(physicalDevice,&createInfo, nullptr,&device) != VK_SUCCESS) {
-    throw std::runtime_error("Fail to create logical device!");
-  };
+  if (vkCreateDevice(physicalDevice, &createInfo, nullptr, &device) !=
+      VK_SUCCESS) {
+    LOG(ERROR) << "Fail to create logical device!";
+  }
 
-  vkGetDeviceQueue(device,queueFamilyIndex,0,&graphicsQueue);
+  vkGetDeviceQueue(device,
+                   queueFamilyIndices.getIndex(QueueFamilyIndices::GRAPHICS), 0,
+                   &graphicsQueue);
+  vkGetDeviceQueue(device,
+                   queueFamilyIndices.getIndex(QueueFamilyIndices::PRESENT), 0,
+                   &presentQueue);
+}
+
+void Application::createSurface() {
+  if (glfwCreateWindowSurface(instance, window, nullptr, &surface) !=
+      VK_SUCCESS) {
+    LOG(ERROR) << "Fail to create window surface";
+  }
+}
+
+void Application::QueueFamilyIndices::setIndex(const uint32_t &f,
+                                               const uint32_t &value) {
+  uint32_t i, t;
+  for (i = 0, t = f; t > 1; t >>= 1, ++i)
+    ;
+  this->indices[i] = value;
+  flag |= f;
+}
+uint32_t Application::QueueFamilyIndices::getIndex(const uint32_t &i,
+                                                   bool byBit) const {
+  if (byBit) {
+    return indices[i];
+  }
+  uint32_t bit, t;
+  for (bit = 0, t = i; t > 1; t >>= 1, ++bit)
+    ;
+  return indices[bit];
 }

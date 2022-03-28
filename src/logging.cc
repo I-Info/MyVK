@@ -2,6 +2,12 @@
 
 #include <iomanip>
 
+void initLogging(char *argv0) {
+  google::InitGoogleLogging(argv0, &logPrefix);
+  FLAGS_logtostdout = true;
+  FLAGS_logtostderr = true;
+}
+
 void logPrefix(std::ostream &s, const google::LogMessageInfo &l, void *) {
   const char *severity = l.severity;
   if (severity[0] == 'I') {

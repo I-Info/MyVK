@@ -1,7 +1,9 @@
 # MyVK
+
 a Vulkan demo project
 
 ## Requirements
+
 1. CMake & C++ toolchain
 2. VulkanSDK
 3. GLFW
