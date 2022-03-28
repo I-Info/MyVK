@@ -270,10 +270,7 @@ void Application::createSurface() {
 
 void Application::QueueFamilyIndices::setIndex(const uint32_t &f,
                                                const uint32_t &value) {
-  uint32_t i, t;
-  for (i = 0, t = f; t > 1; t >>= 1, ++i)
-    ;
-  this->indices[i] = value;
+  this->indices[flag2BitIndex(f)] = value;
   flag |= f;
 }
 uint32_t Application::QueueFamilyIndices::getIndex(const uint32_t &i,
@@ -281,8 +278,13 @@ uint32_t Application::QueueFamilyIndices::getIndex(const uint32_t &i,
   if (byBit) {
     return indices[i];
   }
+  return indices[flag2BitIndex(i)];
+}
+
+inline uint32_t
+Application::QueueFamilyIndices::flag2BitIndex(const uint32_t &f) {
   uint32_t bit, t;
-  for (bit = 0, t = i; t > 1; t >>= 1, ++bit)
+  for (bit = 0, t = f; t > 1; t >>= 1, ++bit)
     ;
-  return indices[bit];
+  return bit;
 }

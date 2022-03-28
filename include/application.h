@@ -41,6 +41,7 @@ private:
     inline bool checkFlag(const uint32_t &f) const { return (flag & f) == 0; }
     void setIndex(const uint32_t &f, const uint32_t &value);
     uint32_t getIndex(const uint32_t &i, bool byBit = false) const;
+    static inline uint32_t flag2BitIndex(const uint32_t &f);
   };
 
   void initVulkan();
