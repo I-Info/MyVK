@@ -1,5 +1,6 @@
 #include "application.h"
 #include "logging.h"
+#include "utility.h"
 
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
@@ -34,6 +35,8 @@ void Application::initVulkan() {
   selectPhysicalDevices(indices, swapChainSupportDetails);
   createLogicalDevice(indices);
   createSwapChain(swapChainSupportDetails, indices);
+  createImageViews();
+  createGraphicsPipeline();
 }
 
 void Application::createInstance() {
@@ -254,12 +257,15 @@ void Application::mainLoop() {
 }
 
 void Application::cleanUp() {
-#ifndef NDEBUG
-  DestroyDebugReportCallbackEXT(instance, callback, nullptr);
-#endif
+  for (auto &swapChainImageView : swapChainImageViews) {
+    vkDestroyImageView(device, swapChainImageView, nullptr);
+  }
   vkDestroySwapchainKHR(device, swapChain, nullptr);
   vkDestroyDevice(device, nullptr);
   vkDestroySurfaceKHR(instance, surface, nullptr);
+#ifndef NDEBUG
+  DestroyDebugReportCallbackEXT(instance, callback, nullptr);
+#endif
   vkDestroyInstance(instance, nullptr);
   glfwDestroyWindow(window);
   glfwTerminate();
@@ -434,6 +440,77 @@ void Application::createSwapChain(
       VK_SUCCESS) {
     LOG(ERROR) << "Fail to create swap chain.";
   }
+
+  vkGetSwapchainImagesKHR(device, swapChain, &imageCount, nullptr);
+  swapChainImages.resize(imageCount);
+  vkGetSwapchainImagesKHR(device, swapChain, &imageCount,
+                          swapChainImages.data());
+  swapChainImageFormat = surfaceFormat.format;
+  swapChainExtent = extent;
+}
+
+void Application::createImageViews() {
+  swapChainImageViews.resize(swapChainImages.size());
+  for (size_t i = 0; i < swapChainImages.size(); ++i) {
+    VkImageViewCreateInfo createInfo{};
+    createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+    createInfo.image = swapChainImages[i];
+    createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+    createInfo.format = swapChainImageFormat;
+    createInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+    createInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+    createInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+    createInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+    createInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    createInfo.subresourceRange.baseMipLevel = 0;
+    createInfo.subresourceRange.levelCount = 1;
+    createInfo.subresourceRange.baseArrayLayer = 0;
+    createInfo.subresourceRange.layerCount = 1;
+    if (vkCreateImageView(device, &createInfo, nullptr,
+                          &swapChainImageViews[i]) != VK_SUCCESS) {
+      LOG(ERROR) << "Fail to create image views.";
+    }
+  }
+}
+void Application::createGraphicsPipeline() {
+  auto vertShaderCode = readFile("vert.spv");
+  auto fragShaderCode = readFile("frag.spv");
+  VkShaderModule vertShaderModule = createShaderModule(vertShaderCode);
+  VkShaderModule fragShaderModule = createShaderModule(fragShaderCode);
+
+  VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
+  vertShaderStageInfo.sType =
+      VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+  vertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
+  vertShaderStageInfo.module = vertShaderModule;
+  vertShaderStageInfo.pName = "main";
+
+  VkPipelineShaderStageCreateInfo fragShaderStageInfo{};
+  fragShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+  fragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+  fragShaderStageInfo.module = fragShaderModule;
+  fragShaderStageInfo.pName = "main";
+
+  VkPipelineShaderStageCreateInfo shaderStages[] = {vertShaderStageInfo, fragShaderStageInfo};
+
+
+
+  vkDestroyShaderModule(device, vertShaderModule, nullptr);
+  vkDestroyShaderModule(device, fragShaderModule, nullptr);
+}
+
+VkShaderModule Application::createShaderModule(const std::vector<char> &code) {
+  VkShaderModuleCreateInfo createInfo{};
+  createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+  createInfo.codeSize = code.size();
+
+  createInfo.pCode = reinterpret_cast<const uint32_t *>(code.data());
+  VkShaderModule shaderModule;
+  if (vkCreateShaderModule(device, &createInfo, nullptr, &shaderModule) !=
+      VK_SUCCESS) {
+    LOG(ERROR) << "Fail to create shader module.";
+  }
+  return shaderModule;
 }
 
 void Application::QueueFamilyIndices::setIndex(const uint32_t &f,

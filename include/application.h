@@ -28,9 +28,15 @@ private:
   VkDevice device{};
 
   VkSwapchainKHR swapChain;
+  std::vector<VkImage> swapChainImages;
+  VkFormat swapChainImageFormat;
+  VkExtent2D swapChainExtent;
+  std::vector<VkImageView> swapChainImageViews;
 
   VkQueue graphicsQueue{};
   VkQueue presentQueue{};
+
+
 
   VkSurfaceKHR surface{};
 
@@ -109,6 +115,12 @@ private:
 
   void createSwapChain(const SwapChainSupportDetails &swapChainSupport,
                        const QueueFamilyIndices &indices);
+
+  void createImageViews();
+
+  void createGraphicsPipeline();
+
+  VkShaderModule createShaderModule(const std::vector<char>& code);
 
   void mainLoop();
 
