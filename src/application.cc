@@ -66,7 +66,6 @@ void Application::createInstance() {
   createInfo.enabledExtensionCount = extensionCount + 1;
   createInfo.ppEnabledExtensionNames = extensions;
 #else
-
   createInfo.enabledExtensionCount = extensionCount;
   createInfo.ppEnabledExtensionNames = glfwExtensions;
 #endif
@@ -170,15 +169,17 @@ bool Application::isDeviceSuitable(const VkPhysicalDevice &dev,
   LOG(INFO) << "Find physical dev: " << deviceProperties.deviceID << " "
             << deviceProperties.vendorID << " " << deviceProperties.deviceName;
 #endif
-  findQueueFamilies(dev, indices);
-  return indices.isComplete();
+  return findQueueFamilies(dev, indices);
 }
 
-void Application::findQueueFamilies(const VkPhysicalDevice &dev,
+bool Application::findQueueFamilies(const VkPhysicalDevice &dev,
                                     QueueFamilyIndices &indices) {
   // get properties
   uint32_t queueFamilyCount = 0;
   vkGetPhysicalDeviceQueueFamilyProperties(dev, &queueFamilyCount, nullptr);
+  if (queueFamilyCount == 0) {
+    return false;
+  }
   auto *queueFamilies = new VkQueueFamilyProperties[queueFamilyCount];
   vkGetPhysicalDeviceQueueFamilyProperties(dev, &queueFamilyCount,
                                            queueFamilies);
@@ -200,11 +201,13 @@ void Application::findQueueFamilies(const VkPhysicalDevice &dev,
     }
 
     if (indices.isComplete()) {
-      break;
+      delete[] queueFamilies;
+      return true;
     }
   }
 
   delete[] queueFamilies;
+  return false;
 }
 
 void Application::mainLoop() {
@@ -227,24 +230,22 @@ void Application::cleanUp() {
 void Application::createLogicalDevice(
     const VkPhysicalDevice &physicalDevice,
     const QueueFamilyIndices &queueFamilyIndices) {
-
-  auto *queueCreateInfos =
-      new VkDeviceQueueCreateInfo[QueueFamilyIndices::FLAGS];
-
+  VkDeviceQueueCreateInfo queueCreateInfos[QueueFamilyIndices::FLAGS];
+  float priority = 1.0f;
   for (int i = 0; i < QueueFamilyIndices::FLAGS; ++i) {
     queueCreateInfos[i].sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
     queueCreateInfos[i].queueFamilyIndex = queueFamilyIndices.getIndex(i, true);
     queueCreateInfos[i].queueCount = 1;
-    queueCreateInfos[i].pQueuePriorities = new float{1.0f};
+    queueCreateInfos[i].pQueuePriorities = &priority;
   }
 
-  auto *deviceFeatures = new VkPhysicalDeviceFeatures{};
+  VkPhysicalDeviceFeatures deviceFeatures{};
 
   VkDeviceCreateInfo createInfo = {};
   createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
   createInfo.pQueueCreateInfos = queueCreateInfos;
   createInfo.queueCreateInfoCount = QueueFamilyIndices::FLAGS;
-  createInfo.pEnabledFeatures = deviceFeatures;
+  createInfo.pEnabledFeatures = &deviceFeatures;
   createInfo.enabledExtensionCount = 0;
   createInfo.enabledLayerCount = 0;
 
@@ -273,9 +274,10 @@ void Application::QueueFamilyIndices::setIndex(const uint32_t &f,
   this->indices[flag2BitIndex(f)] = value;
   flag |= f;
 }
+
 uint32_t Application::QueueFamilyIndices::getIndex(const uint32_t &i,
-                                                   bool byBit) const {
-  if (byBit) {
+                                                   bool byBitIndex) const {
+  if (byBitIndex) {
     return indices[i];
   }
   return indices[flag2BitIndex(i)];
@@ -283,8 +285,8 @@ uint32_t Application::QueueFamilyIndices::getIndex(const uint32_t &i,
 
 inline uint32_t
 Application::QueueFamilyIndices::flag2BitIndex(const uint32_t &f) {
-  uint32_t bit, t;
-  for (bit = 0, t = f; t > 1; t >>= 1, ++bit)
+  uint32_t bit = 0, t = f;
+  for (; t > 1; t >>= 1, ++bit)
     ;
   return bit;
 }

@@ -33,14 +33,14 @@ private:
   struct QueueFamilyIndices {
     static const uint32_t GRAPHICS; // 0b01
     static const uint32_t PRESENT;  // 0b10
-    static const uint32_t FLAGS = 2;
+    static const int FLAGS = 2;
     uint32_t indices[FLAGS]{};
     uint32_t flag = 0B00;
 
     inline bool isComplete() const { return flag == 0B11; }
     inline bool checkFlag(const uint32_t &f) const { return (flag & f) == 0; }
     void setIndex(const uint32_t &f, const uint32_t &value);
-    uint32_t getIndex(const uint32_t &i, bool byBit = false) const;
+    uint32_t getIndex(const uint32_t &i, bool byBitIndex = false) const;
     static inline uint32_t flag2BitIndex(const uint32_t &f);
   };
 
@@ -79,7 +79,7 @@ private:
   bool isDeviceSuitable(const VkPhysicalDevice &dev,
                         QueueFamilyIndices &indices);
 
-  void findQueueFamilies(const VkPhysicalDevice &dev,
+  bool findQueueFamilies(const VkPhysicalDevice &dev,
                          Application::QueueFamilyIndices &indices);
 
   void createLogicalDevice(const VkPhysicalDevice &physicalDevice,
