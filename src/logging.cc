@@ -3,7 +3,11 @@
 #include <iomanip>
 
 void initLogging(char *argv0) {
+#ifdef __WIN32__
+  google::InitGoogleLogging(argv0);
+#else
   google::InitGoogleLogging(argv0, &logPrefix);
+#endif
   FLAGS_logtostdout = true;
   FLAGS_logtostderr = true;
 }

@@ -39,6 +39,13 @@ private:
   VkRenderPass renderPass;
   VkPipelineLayout pipelineLayout;
 
+  VkPipeline graphicsPipeline;
+
+  std::vector<VkFramebuffer> swapChainFramebuffers;
+
+  VkCommandPool commandPool;
+  std::vector<VkCommandBuffer> commandBuffers;
+
   VkSurfaceKHR surface{};
 
   struct QueueFamilyIndices {
@@ -122,6 +129,12 @@ private:
   void createRenderPass();
 
   void createGraphicsPipeline();
+
+  void createFramebuffers();
+
+  void createCommandPool(const QueueFamilyIndices &);
+
+  void createCommandBuffers();
 
   VkShaderModule createShaderModule(const std::vector<char>& code);
 
