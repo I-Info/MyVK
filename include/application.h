@@ -46,6 +46,9 @@ private:
   VkCommandPool commandPool;
   std::vector<VkCommandBuffer> commandBuffers;
 
+  VkSemaphore imageAvailableSemaphore;
+  VkSemaphore renderFinishedSemaphore;
+
   VkSurfaceKHR surface{};
 
   struct QueueFamilyIndices {
@@ -98,7 +101,8 @@ private:
 
   void createSurface();
 
-  void selectPhysicalDevices(QueueFamilyIndices &indices,SwapChainSupportDetails &swapChainSupport);
+  void selectPhysicalDevices(QueueFamilyIndices &indices,
+                             SwapChainSupportDetails &swapChainSupport);
 
   bool isDeviceSuitable(const VkPhysicalDevice &dev,
                         QueueFamilyIndices &indices,
@@ -136,9 +140,13 @@ private:
 
   void createCommandBuffers();
 
-  VkShaderModule createShaderModule(const std::vector<char>& code);
+  void createSemaphores();
+
+  VkShaderModule createShaderModule(const std::vector<char> &code);
 
   void mainLoop();
+
+  void drawFrame();
 
   void cleanUp();
 };
