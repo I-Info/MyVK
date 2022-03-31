@@ -36,6 +36,7 @@ private:
   VkQueue graphicsQueue{};
   VkQueue presentQueue{};
 
+  VkRenderPass renderPass;
   VkPipelineLayout pipelineLayout;
 
   VkSurfaceKHR surface{};
@@ -117,6 +118,8 @@ private:
                        const QueueFamilyIndices &indices);
 
   void createImageViews();
+
+  void createRenderPass();
 
   void createGraphicsPipeline();
 
