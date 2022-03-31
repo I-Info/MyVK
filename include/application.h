@@ -36,7 +36,7 @@ private:
   VkQueue graphicsQueue{};
   VkQueue presentQueue{};
 
-
+  VkPipelineLayout pipelineLayout;
 
   VkSurfaceKHR surface{};
 
