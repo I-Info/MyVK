@@ -289,7 +289,7 @@ void Application::cleanUp() {
 
 void Application::createLogicalDevice(
     const QueueFamilyIndices &queueFamilyIndices) {
-  VkDeviceQueueCreateInfo queueCreateInfos[QueueFamilyIndices::FLAGS]{};
+  VkDeviceQueueCreateInfo queueCreateInfos[QueueFamilyIndices::FLAGS] = {};
   float priority = 1.0f;
   for (int i = 0; i < QueueFamilyIndices::FLAGS; ++i) {
     queueCreateInfos[i].sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
@@ -298,9 +298,9 @@ void Application::createLogicalDevice(
     queueCreateInfos[i].pQueuePriorities = &priority;
   }
 
-  VkPhysicalDeviceFeatures deviceFeatures{};
+  VkPhysicalDeviceFeatures deviceFeatures = {};
 
-  VkDeviceCreateInfo createInfo{};
+  VkDeviceCreateInfo createInfo = {};
   createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
   if (queueFamilyIndices.getIndex(QueueFamilyIndices::GRAPHICS) !=
       queueFamilyIndices.getIndex(QueueFamilyIndices::PRESENT)) {
@@ -425,7 +425,7 @@ void Application::createSwapChain(
     imageCount = swapChainSupport.capabilities.maxImageCount;
   }
 
-  VkSwapchainCreateInfoKHR createInfo{};
+  VkSwapchainCreateInfoKHR createInfo = {};
   createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
   createInfo.surface = surface;
   createInfo.minImageCount = imageCount;
@@ -468,7 +468,7 @@ void Application::createSwapChain(
 void Application::createImageViews() {
   swapChainImageViews.resize(swapChainImages.size());
   for (size_t i = 0; i < swapChainImages.size(); ++i) {
-    VkImageViewCreateInfo createInfo{};
+    VkImageViewCreateInfo createInfo = {};
     createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
     createInfo.image = swapChainImages[i];
     createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
@@ -494,14 +494,14 @@ void Application::createGraphicsPipeline() {
   VkShaderModule vertShaderModule = createShaderModule(vertShaderCode);
   VkShaderModule fragShaderModule = createShaderModule(fragShaderCode);
 
-  VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
+  VkPipelineShaderStageCreateInfo vertShaderStageInfo = {};
   vertShaderStageInfo.sType =
       VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
   vertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
   vertShaderStageInfo.module = vertShaderModule;
   vertShaderStageInfo.pName = "main";
 
-  VkPipelineShaderStageCreateInfo fragShaderStageInfo{};
+  VkPipelineShaderStageCreateInfo fragShaderStageInfo = {};
   fragShaderStageInfo.sType =
       VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
   fragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
@@ -511,7 +511,7 @@ void Application::createGraphicsPipeline() {
   VkPipelineShaderStageCreateInfo shaderStages[] = {vertShaderStageInfo,
                                                     fragShaderStageInfo};
 
-  VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
+  VkPipelineVertexInputStateCreateInfo vertexInputInfo = {};
   vertexInputInfo.sType =
       VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
   vertexInputInfo.vertexBindingDescriptionCount = 0;
@@ -519,13 +519,13 @@ void Application::createGraphicsPipeline() {
   vertexInputInfo.vertexAttributeDescriptionCount = 0;
   vertexInputInfo.pVertexAttributeDescriptions = nullptr;
 
-  VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
+  VkPipelineInputAssemblyStateCreateInfo inputAssembly = {};
   inputAssembly.sType =
       VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
   inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
   inputAssembly.primitiveRestartEnable = VK_FALSE;
 
-  VkViewport viewport{};
+  VkViewport viewport = {};
   viewport.x = 0.0f;
   viewport.y = 0.0f;
   viewport.width = static_cast<float>(swapChainExtent.width);
@@ -535,14 +535,14 @@ void Application::createGraphicsPipeline() {
 
   VkRect2D scissor{.offset = {0, 0}, .extent = swapChainExtent};
 
-  VkPipelineViewportStateCreateInfo viewportState{};
+  VkPipelineViewportStateCreateInfo viewportState = {};
   viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
   viewportState.viewportCount = 1;
   viewportState.pViewports = &viewport;
   viewportState.scissorCount = 1;
   viewportState.pScissors = &scissor;
 
-  VkPipelineRasterizationStateCreateInfo rasterizer{};
+  VkPipelineRasterizationStateCreateInfo rasterizer = {};
   rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
   rasterizer.depthClampEnable = VK_FALSE;
   rasterizer.rasterizerDiscardEnable = VK_FALSE;
@@ -555,7 +555,7 @@ void Application::createGraphicsPipeline() {
   rasterizer.depthBiasClamp = 0.0f;
   rasterizer.depthBiasSlopeFactor = 0.0f;
 
-  VkPipelineMultisampleStateCreateInfo multisampling{};
+  VkPipelineMultisampleStateCreateInfo multisampling = {};
   multisampling.sType =
       VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
   multisampling.sampleShadingEnable = VK_FALSE;
@@ -565,7 +565,7 @@ void Application::createGraphicsPipeline() {
   multisampling.alphaToCoverageEnable = VK_FALSE; // Optional
   multisampling.alphaToOneEnable = VK_FALSE;      // Optional
 
-  VkPipelineColorBlendAttachmentState colorBlendAttachment{};
+  VkPipelineColorBlendAttachmentState colorBlendAttachment = {};
   colorBlendAttachment.colorWriteMask =
       VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
       VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
@@ -577,7 +577,7 @@ void Application::createGraphicsPipeline() {
   colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO; // Optional
   colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;             // Optional
 
-  VkPipelineColorBlendStateCreateInfo colorBlending{};
+  VkPipelineColorBlendStateCreateInfo colorBlending = {};
   colorBlending.sType =
       VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
   colorBlending.logicOpEnable = VK_FALSE;
@@ -589,7 +589,7 @@ void Application::createGraphicsPipeline() {
   colorBlending.blendConstants[2] = 0.0f; // Optional
   colorBlending.blendConstants[3] = 0.0f; // Optional
 
-  VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
+  VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
   pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
   pipelineLayoutInfo.setLayoutCount = 0;            // Optional
   pipelineLayoutInfo.pSetLayouts = nullptr;         // Optional
@@ -601,7 +601,7 @@ void Application::createGraphicsPipeline() {
     LOG(ERROR) << "Failed to create pipeline layout!";
   }
 
-  VkGraphicsPipelineCreateInfo pipelineInfo{};
+  VkGraphicsPipelineCreateInfo pipelineInfo = {};
   pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
   pipelineInfo.stageCount = 2;
   pipelineInfo.pStages = shaderStages;
@@ -629,7 +629,7 @@ void Application::createGraphicsPipeline() {
 }
 
 VkShaderModule Application::createShaderModule(const std::vector<char> &code) {
-  VkShaderModuleCreateInfo createInfo{};
+  VkShaderModuleCreateInfo createInfo = {};
   createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
   createInfo.codeSize = code.size();
 
@@ -643,7 +643,7 @@ VkShaderModule Application::createShaderModule(const std::vector<char> &code) {
 }
 
 void Application::createRenderPass() {
-  VkAttachmentDescription colorAttachment{};
+  VkAttachmentDescription colorAttachment = {};
   colorAttachment.format = swapChainImageFormat;
   colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
   colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
@@ -653,16 +653,16 @@ void Application::createRenderPass() {
   colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
   colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
-  VkAttachmentReference colorAttachmentRef{};
+  VkAttachmentReference colorAttachmentRef = {};
   colorAttachmentRef.attachment = 0;
   colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
-  VkSubpassDescription subPass{};
+  VkSubpassDescription subPass = {};
   subPass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
   subPass.colorAttachmentCount = 1;
   subPass.pColorAttachments = &colorAttachmentRef;
 
-  VkSubpassDependency dependency{};
+  VkSubpassDependency dependency = {};
   dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
   dependency.dstSubpass = 0;
   dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
@@ -671,7 +671,7 @@ void Application::createRenderPass() {
   dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT |
                              VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 
-  VkRenderPassCreateInfo renderPassInfo{};
+  VkRenderPassCreateInfo renderPassInfo = {};
   renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
   renderPassInfo.attachmentCount = 1;
   renderPassInfo.pAttachments = &colorAttachment;
@@ -691,7 +691,7 @@ void Application::createFramebuffers() {
   for (size_t i = 0; i < swapChainImageViews.size(); i++) {
     VkImageView attachments[] = {swapChainImageViews[i]};
 
-    VkFramebufferCreateInfo framebufferInfo{};
+    VkFramebufferCreateInfo framebufferInfo = {};
     framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
     framebufferInfo.renderPass = renderPass;
     framebufferInfo.attachmentCount = 1;
@@ -708,7 +708,7 @@ void Application::createFramebuffers() {
 }
 
 void Application::createCommandPool(const QueueFamilyIndices &indices) {
-  VkCommandPoolCreateInfo poolInfo{};
+  VkCommandPoolCreateInfo poolInfo = {};
   poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
   poolInfo.queueFamilyIndex = indices.getIndex(QueueFamilyIndices::GRAPHICS);
   poolInfo.flags = 0;
@@ -722,7 +722,7 @@ void Application::createCommandPool(const QueueFamilyIndices &indices) {
 void Application::createCommandBuffers() {
   commandBuffers.resize(swapChainFramebuffers.size());
 
-  VkCommandBufferAllocateInfo allocInfo{};
+  VkCommandBufferAllocateInfo allocInfo = {};
   allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
   allocInfo.commandPool = commandPool;
   allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
@@ -734,14 +734,14 @@ void Application::createCommandBuffers() {
   }
 
   for (size_t i = 0; i < commandBuffers.size(); i++) {
-    VkCommandBufferBeginInfo beginInfo{};
+    VkCommandBufferBeginInfo beginInfo = {};
     beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
     beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
     beginInfo.pInheritanceInfo = nullptr; // Optional
 
     vkBeginCommandBuffer(commandBuffers[i], &beginInfo);
 
-    VkRenderPassBeginInfo renderPassInfo{};
+    VkRenderPassBeginInfo renderPassInfo = {};
     renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
     renderPassInfo.renderPass = renderPass;
     renderPassInfo.framebuffer = swapChainFramebuffers[i];
@@ -764,7 +764,7 @@ void Application::createCommandBuffers() {
 }
 
 void Application::createSemaphores() {
-  VkSemaphoreCreateInfo semaphoreInfo{};
+  VkSemaphoreCreateInfo semaphoreInfo = {};
   semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
   if (vkCreateSemaphore(device, &semaphoreInfo, nullptr,
                         &imageAvailableSemaphore) != VK_SUCCESS ||
@@ -780,7 +780,7 @@ void Application::drawFrame() {
   uint32_t imageIndex;
   vkAcquireNextImageKHR(device, swapChain, std::numeric_limits<uint64_t>::max(),
                         imageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex);
-  VkSubmitInfo submitInfo{};
+  VkSubmitInfo submitInfo = {};
   submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
   VkSemaphore waitSemaphores[] = {imageAvailableSemaphore};
   VkPipelineStageFlags waitStages = {
@@ -799,7 +799,7 @@ void Application::drawFrame() {
     LOG(ERROR) << "Fail to submit draw command buffer.";
   }
 
-  VkPresentInfoKHR presentInfo{};
+  VkPresentInfoKHR presentInfo = {};
   presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
   presentInfo.waitSemaphoreCount = 1;
   presentInfo.pWaitSemaphores = signalSemaphores;
